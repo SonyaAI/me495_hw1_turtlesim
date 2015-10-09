@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from math import pi, cos, sin, sqrt, atan
+from math import pi, cos, sin, sqrt, atan, atan2
 from turtlesim.srv import TeleportAbsolute
 from geometry_msgs.msg import Twist, Vector3
 
@@ -34,7 +34,7 @@ def calc_velocities(time):
 	v_y = 6*pi/T*cos(2*pi*t/T) # dy/dt
 	v_t = sqrt(v_x*v_x + v_y*v_y) #Translational velocity -> translational speed (scalar)
 
-	theta = atan(v_x/v_y) #use atan2(v_x,v_y) instead to figure out which quadrant to use
+	theta = atan2(v_x,v_y) #use atan2(v_x,v_y) instead to figure out which quadrant to use
 	a_x = - 48*pi*pi/(T*T) * sin(4*pi*t/T)
 	a_y = -12*pi*pi/(T*T) * sin(2*pi*t/T)
 	v_r =  (v_x*a_y - v_y*a_x)/(v_t*v_t)# Angular velocity is d(theta)/dt 
