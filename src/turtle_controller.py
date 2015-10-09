@@ -19,13 +19,13 @@ def init_turtle():
 
 	#Get location and orientation at t=0
 	rospy.wait_for_service('turtle1/teleport_absolute')
-	location = rospy.serviceProxy('turtle1/teleport_absolute', TeleportAbsolute)
-	init_location(5.5, 5.5, 0) #middle of window, facing east
+	location = rospy.ServiceProxy('turtle1/teleport_absolute', TeleportAbsolute)
+	init_location = location(5.5, 5.5, 0) #middle of window, facing east
 
 """
 The following function calculates translational and rotational velocity at time.
 """
-def calc_vel(time):
+def calc_velocities(time):
 	t = time
 	x = 3 * sin(4*pi*t/T)
 	y = 3 * sin(2*pi*t/T)
@@ -34,8 +34,10 @@ def calc_vel(time):
 	v_y = 6*pi/T*cos(2*pi*t/T) # dy/dt
 	v_t = sqrt(v_x*v_x + v_y*v_y) #Translational velocity -> translational speed (scalar)
 
-	theta = atan(v_x/v_y) #use atan2 instead to figure out which quadrant to use
-	v_r = 1 #TODO: Angular velocity is d(theta)/dt 
+	theta = atan(v_x/v_y) #use atan2(v_x,v_y) instead to figure out which quadrant to use
+	a_x = - 48*pi*pi/(T*T) * sin(4*pi*t/T)
+	a_y = -12*pi*pi/(T*T) * sin(2*pi*t/T)
+	v_r =  (v_x*a_y - v_y*a_x)/(v_t*v_t)# Angular velocity is d(theta)/dt 
 	velocities = [v_t, v_r]
 	return velocities
 
@@ -43,20 +45,20 @@ def calc_vel(time):
 The following function publishes translational and rotaional velocities to the cmd_vel topic.
 Turtlesim_node is listening to cmd_vel topic and then moves the turtle according to the new values.
 """
-def pub_vel():
+def pub_velocities():
 	init_turtle()
 
 	#ROS Publisher tutorial 
 	pub = rospy.Publisher('turtle1/cmd_vel', Twist, queue_size = 10)
-	rospy.init_node('turtle_controller_node', ananymous=True) #For the future: need for subscribing 
+	rospy.init_node('turtle_controller_node', anonymous=True) #For the future: need for subscribing 
 
 	#Following loop from ROS Time tutorial
 	rate = rospy.Rate(f) #Rate of a loop. f in Hz. 
 	while not rospy.is_shutdown():
 		time = rospy.get_time()
 
-		v_t = Vector3(get_vel(time)[0], 0, 0)
-		v_r = Vector3(0, 0, get_vel(time)[1])
+		v_t = Vector3(calc_velocities(time)[0], 0, 0)
+		v_r = Vector3(0, 0, calc_velocities(time)[1])
 		velocities = Twist(v_t, v_r)
 		pub.publish(velocities) 
 		try:
@@ -66,4 +68,4 @@ def pub_vel():
 		
 
 if __name__ == '__main__':
-    pub_vel()
+    pub_velocities()
